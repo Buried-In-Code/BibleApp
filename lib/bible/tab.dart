@@ -54,7 +54,8 @@ class _BookSelectorState extends State<BookSelector> {
                           );
                         } else {
                           return ChapterSelector(
-                              translation: provider.translation, book: snapshot.data!);
+                              translation: provider.translation,
+                              book: snapshot.data!);
                         }
                       },
                     ),
@@ -107,7 +108,9 @@ class ChapterSelector extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => ChapterScreen(
-                        translation: translation, book: book, chapter: chapter),
+                        translation: translation,
+                        initialBook: book,
+                        initialChapter: chapter),
                   ),
                 );
               },
@@ -121,64 +124,141 @@ class ChapterSelector extends StatelessWidget {
   }
 }
 
-class ChapterScreen extends StatelessWidget {
+class ChapterScreen extends StatefulWidget {
   final Translation translation;
-  final Book book;
-  final Chapter chapter;
+  final Book initialBook;
+  final Chapter initialChapter;
 
-  const ChapterScreen(
-      {Key? key,
-      required this.translation,
-      required this.book,
-      required this.chapter})
-      : super(key: key);
+  const ChapterScreen({
+    Key? key,
+    required this.translation,
+    required this.initialBook,
+    required this.initialChapter,
+  }) : super(key: key);
+
+  @override
+  _ChapterScreenState createState() => _ChapterScreenState();
+}
+
+class _ChapterScreenState extends State<ChapterScreen> {
+  late Book _currentBook;
+  late Chapter _currentChapter;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentBook = widget.initialBook;
+    _currentChapter = widget.initialChapter;
+  }
+
+  Future<void> _changeChapterOrBook(bool forward) async {
+    final books = widget.translation.books;
+    final currentBookIndex = books.indexWhere((b) => b == _currentBook.name);
+
+    if (forward) {
+      if (_currentChapter.chapter < _currentBook.chapters.length) {
+        // Move to the next chapter in the same book
+        setState(() {
+          _currentChapter = _currentBook.chapters[_currentChapter.chapter];
+        });
+      } else if (currentBookIndex < books.length - 1) {
+        // Move to the next book
+        final nextBookName = books[currentBookIndex + 1];
+        final nextBook = await loadBook(widget.translation, nextBookName);
+        setState(() {
+          _currentBook = nextBook;
+          _currentChapter = nextBook.chapters.first;
+        });
+      }
+    } else {
+      if (_currentChapter.chapter > 1) {
+        // Move to the previous chapter in the same book
+        setState(() {
+          _currentChapter = _currentBook.chapters[_currentChapter.chapter - 2];
+        });
+      } else if (currentBookIndex > 0) {
+        // Move to the previous book
+        final prevBookName = books[currentBookIndex - 1];
+        final prevBook = await loadBook(widget.translation, prevBookName);
+        setState(() {
+          _currentBook = prevBook;
+          _currentChapter = prevBook.chapters.last;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<SettingsProvider>(context);
-
     return Scaffold(
-      appBar: AppBar(title: Text('${book.name} Chapter ${chapter.chapter}')),
-      body: Builder(
-        builder: (context) {
-          int maxVerseDigits = chapter.verses.length.toString().length;
-          double numberColumnWidth = maxVerseDigits * 10.0;
-
-          return ListView.builder(
-            itemCount: chapter.verses.length,
-            itemBuilder: (context, index) {
-              final verse = chapter.verses[index];
-              return Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: numberColumnWidth,
-                      child: Text(
-                        "${verse.verse}",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
-                        textAlign: TextAlign.right,
-                      ),
-                    ),
-                    const SizedBox(width: 8.0),
-                    Expanded(
-                      child: Text(
-                        verse.text,
-                        style: TextStyle(fontSize: 16),
-                        textAlign: TextAlign.left,
-                        softWrap: true,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
+      appBar: AppBar(
+          title:
+              Text('${_currentBook.name} Chapter ${_currentChapter.chapter}')),
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity! < 0) {
+            _changeChapterOrBook(true); // Swipe left → Next
+          } else if (details.primaryVelocity! > 0) {
+            _changeChapterOrBook(false); // Swipe right → Previous
+          }
         },
+        child: ListView.builder(
+          itemCount: _currentChapter.verses.length,
+          itemBuilder: (context, index) {
+            final verse = _currentChapter.verses[index];
+            return Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 30.0,
+                    child: Text(
+                      "${verse.verse}",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                  const SizedBox(width: 8.0),
+                  Expanded(
+                    child: Text.rich(
+                      _formatVerse(verse.text.replaceAll('`', '\'')),
+                      style: TextStyle(fontSize: 16),
+                      textAlign: TextAlign.left,
+                      softWrap: true,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
+  }
+
+  TextSpan _formatVerse(String text) {
+    final List<TextSpan> spans = [];
+    final RegExp regExp = RegExp(r'(<FI>.*?<Fi>)');
+    final Iterable<RegExpMatch> matches = regExp.allMatches(text);
+    int lastMatchEnd = 0;
+
+    for (final match in matches) {
+      if (match.start > lastMatchEnd) {
+        spans.add(TextSpan(text: text.substring(lastMatchEnd, match.start)));
+      }
+      String italicText = text.substring(match.start + 4, match.end - 4);
+      spans.add(TextSpan(
+          text: italicText, style: TextStyle(fontStyle: FontStyle.italic)));
+      lastMatchEnd = match.end;
+    }
+
+    if (lastMatchEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastMatchEnd)));
+    }
+
+    return TextSpan(children: spans);
   }
 }

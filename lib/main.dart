@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'bible/tab.dart';
+import 'calendar/tab.dart';
 import 'settings/provider.dart';
 import 'settings/tab.dart';
-import 'bible/tab.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,7 +49,7 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    Center(child: Text('Readings Screen')),
+    CalendarTab(),
     BookSelector(),
     SettingsTab(),
   ];

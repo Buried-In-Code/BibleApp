@@ -7,6 +7,7 @@ class SettingsConstants {
   static const List<String> translations = [
     "BBE",
     "KJV",
+    "YLT",
   ];
 }
 
