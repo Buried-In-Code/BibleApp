@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 class Translation {
   final String name;
   final String acronym;

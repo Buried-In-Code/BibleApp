@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:intl/intl.dart';
 import 'models/translation.dart';
 
 String capitalize(String value) =>

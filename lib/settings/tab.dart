@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'provider.dart';
-import '../models/translation.dart';
 import '../utils.dart';
 
 class SettingsTab extends StatefulWidget {

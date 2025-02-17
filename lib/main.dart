@@ -48,11 +48,20 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    CalendarTab(),
-    BookSelector(),
-    SettingsTab(),
-  ];
+  final GlobalKey<NavigatorState> _bibleNavigatorKey =
+      GlobalKey<NavigatorState>();
+
+  final List<Widget> _screens = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _screens.addAll([
+      CalendarTab(),
+      BibleTab(navigatorKey: _bibleNavigatorKey),
+      SettingsTab(),
+    ]);
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -63,7 +72,10 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,

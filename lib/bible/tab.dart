@@ -4,192 +4,191 @@ import '../models/translation.dart';
 import '../settings/provider.dart';
 import '../utils.dart';
 
-class BookSelector extends StatefulWidget {
+class BibleTab extends StatelessWidget {
+  final GlobalKey<NavigatorState> navigatorKey;
+
+  const BibleTab({super.key, required this.navigatorKey});
+
+  @override
+  Widget build(BuildContext context) {
+    return Navigator(
+      key: navigatorKey,
+      initialRoute: '/bookSelector',
+      onGenerateRoute: (settings) {
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        switch (settings.name) {
+          case '/chapterSelector':
+            return MaterialPageRoute(
+              builder: (_) => ChapterSelector(
+                initialBook: args['book'],
+              ),
+            );
+          case '/versesScreen':
+            return MaterialPageRoute(
+              builder: (_) => VersesScreen(
+                initialBook: args['book'],
+                initialChapter: args['chapter'],
+              ),
+            );
+          case '/bookSelector':
+          default:
+            return MaterialPageRoute(builder: (_) => const BookSelector());
+        }
+      },
+    );
+  }
+}
+
+class BookSelector extends StatelessWidget {
   const BookSelector({super.key});
 
   @override
-  _BookSelectorState createState() => _BookSelectorState();
-}
-
-class _BookSelectorState extends State<BookSelector> {
-  @override
   Widget build(BuildContext context) {
     final provider = Provider.of<SettingsProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text('${provider.translation.name} - Select Book')),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 3,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemCount: provider.translation.books.length,
-          itemBuilder: (context, index) {
-            final book = provider.translation.books[index];
+      appBar: AppBar(
+          title: Text('${provider.translation.name} - Select Book'),
+          automaticallyImplyLeading: false),
+      body: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 3,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+        ),
+        itemCount: provider.translation.books.length,
+        itemBuilder: (context, index) {
+          final book = provider.translation.books[index];
 
-            return ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FutureBuilder<Book>(
-                      future: loadBook(provider.translation, book),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Scaffold(
-                            body: Center(child: CircularProgressIndicator()),
-                          );
-                        } else if (snapshot.hasError || snapshot.data == null) {
-                          print(snapshot);
-                          return Scaffold(
-                            body: Center(
-                              child: Text(
-                                  "Failed to load book: ${snapshot.error ?? 'Unexpected null data'}"),
-                            ),
-                          );
-                        } else {
-                          return ChapterSelector(
-                              translation: provider.translation,
-                              book: snapshot.data!);
-                        }
-                      },
-                    ),
-                  ),
+          return ElevatedButton(
+            onPressed: () async {
+              final loadedBook = await loadBook(provider.translation, book);
+              if (loadedBook != null) {
+                Navigator.of(context, rootNavigator: false).pushNamed(
+                  '/chapterSelector',
+                  arguments: {
+                    'book': loadedBook,
+                  },
                 );
-              },
-              child: Text(
-                book,
+              }
+            },
+            child: Text(book,
+                textAlign: TextAlign.center, style: TextStyle(fontSize: 20)),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class ChapterSelector extends StatefulWidget {
+  final Book initialBook;
+
+  const ChapterSelector({
+    super.key,
+    required this.initialBook,
+  });
+
+  @override
+  _ChapterSelectorState createState() => _ChapterSelectorState();
+}
+
+class _ChapterSelectorState extends State<ChapterSelector> {
+  late Translation _currentTranslation;
+  late Book _currentBook;
+
+  @override
+  void initState() {
+    super.initState();
+    final provider = Provider.of<SettingsProvider>(context, listen: false);
+    _currentTranslation = provider.translation;
+    _currentBook = widget.initialBook;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = Provider.of<SettingsProvider>(context);
+    if (_currentTranslation != provider.translation) {
+      _currentTranslation = provider.translation;
+      _loadNewTranslation();
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: Text('${_currentBook.name} - Select Chapter')),
+      body: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          childAspectRatio: 1.5,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+        ),
+        itemCount: _currentBook.chapters.length,
+        itemBuilder: (context, index) {
+          final chapter = _currentBook.chapters[index];
+
+          return ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pushNamed(
+                '/versesScreen',
+                arguments: {'book': _currentBook, 'chapter': chapter},
+              );
+            },
+            child: Text('${chapter.chapter}',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 20),
-              ),
-            );
-          },
-        ),
+                style: const TextStyle(fontSize: 20)),
+          );
+        },
       ),
     );
   }
-}
 
-class ChapterSelector extends StatelessWidget {
-  final Translation translation;
-  final Book book;
-
-  const ChapterSelector(
-      {Key? key, required this.translation, required this.book})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = Provider.of<SettingsProvider>(context);
-
-    return Scaffold(
-      appBar: AppBar(title: Text('${book.name} - Select Chapter')),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            childAspectRatio: 1.5,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemCount: book.chapters.length,
-          itemBuilder: (context, index) {
-            final chapter = book.chapters[index];
-
-            return ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChapterScreen(
-                        translation: translation,
-                        initialBook: book,
-                        initialChapter: chapter),
-                  ),
-                );
-              },
-              child: Text('${chapter.chapter}',
-                  textAlign: TextAlign.center, style: TextStyle(fontSize: 20)),
-            );
-          },
-        ),
-      ),
-    );
+  Future<void> _loadNewTranslation() async {
+    final newBook = await loadBook(_currentTranslation, _currentBook.name);
+    if (newBook != null) {
+      setState(() {
+        _currentBook = newBook;
+      });
+    }
   }
 }
 
-class ChapterScreen extends StatefulWidget {
-  final Translation translation;
+class VersesScreen extends StatefulWidget {
   final Book initialBook;
   final Chapter initialChapter;
 
-  const ChapterScreen({
-    Key? key,
-    required this.translation,
+  const VersesScreen({
+    super.key,
     required this.initialBook,
     required this.initialChapter,
-  }) : super(key: key);
+  });
 
   @override
-  _ChapterScreenState createState() => _ChapterScreenState();
+  _VersesScreenState createState() => _VersesScreenState();
 }
 
-class _ChapterScreenState extends State<ChapterScreen> {
+class _VersesScreenState extends State<VersesScreen> {
+  late Translation _currentTranslation;
   late Book _currentBook;
   late Chapter _currentChapter;
 
   @override
   void initState() {
     super.initState();
+    final provider = Provider.of<SettingsProvider>(context, listen: false);
+    _currentTranslation = provider.translation;
     _currentBook = widget.initialBook;
     _currentChapter = widget.initialChapter;
   }
 
-  Future<void> _changeChapterOrBook(bool forward) async {
-    final books = widget.translation.books;
-    final currentBookIndex = books.indexWhere((b) => b == _currentBook.name);
-
-    if (forward) {
-      if (_currentChapter.chapter < _currentBook.chapters.length) {
-        // Move to the next chapter in the same book
-        setState(() {
-          _currentChapter = _currentBook.chapters[_currentChapter.chapter];
-        });
-      } else if (currentBookIndex < books.length - 1) {
-        // Move to the next book
-        final nextBookName = books[currentBookIndex + 1];
-        final nextBook = await loadBook(widget.translation, nextBookName);
-        setState(() {
-          _currentBook = nextBook;
-          _currentChapter = nextBook.chapters.first;
-        });
-      }
-    } else {
-      if (_currentChapter.chapter > 1) {
-        // Move to the previous chapter in the same book
-        setState(() {
-          _currentChapter = _currentBook.chapters[_currentChapter.chapter - 2];
-        });
-      } else if (currentBookIndex > 0) {
-        // Move to the previous book
-        final prevBookName = books[currentBookIndex - 1];
-        final prevBook = await loadBook(widget.translation, prevBookName);
-        setState(() {
-          _currentBook = prevBook;
-          _currentChapter = prevBook.chapters.last;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<SettingsProvider>(context);
+    if (_currentTranslation != provider.translation) {
+      _currentTranslation = provider.translation;
+      _loadNewTranslation();
+    }
+
     return Scaffold(
       appBar: AppBar(
           title:
@@ -197,9 +196,9 @@ class _ChapterScreenState extends State<ChapterScreen> {
       body: GestureDetector(
         onHorizontalDragEnd: (details) {
           if (details.primaryVelocity! < 0) {
-            _changeChapterOrBook(true); // Swipe left → Next
+            _changeChapterOrBook(true);
           } else if (details.primaryVelocity! > 0) {
-            _changeChapterOrBook(false); // Swipe right → Previous
+            _changeChapterOrBook(false);
           }
         },
         child: ListView.builder(
@@ -237,6 +236,51 @@ class _ChapterScreenState extends State<ChapterScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _loadNewTranslation() async {
+    final newBook = await loadBook(_currentTranslation, _currentBook.name);
+    if (newBook != null) {
+      setState(() {
+        _currentBook = newBook;
+        _currentChapter = newBook.chapters.firstWhere(
+            (c) => c.chapter == _currentChapter.chapter,
+            orElse: () => newBook.chapters.first);
+      });
+    }
+  }
+
+  Future<void> _changeChapterOrBook(bool forward) async {
+    final books = _currentTranslation.books;
+    final currentBookIndex = books.indexWhere((b) => b == _currentBook.name);
+
+    if (forward) {
+      if (_currentChapter.chapter < _currentBook.chapters.length) {
+        setState(() {
+          _currentChapter = _currentBook.chapters[_currentChapter.chapter];
+        });
+      } else if (currentBookIndex < books.length - 1) {
+        final nextBookName = books[currentBookIndex + 1];
+        final nextBook = await loadBook(_currentTranslation, nextBookName);
+        setState(() {
+          _currentBook = nextBook;
+          _currentChapter = nextBook.chapters.first;
+        });
+      }
+    } else {
+      if (_currentChapter.chapter > 1) {
+        setState(() {
+          _currentChapter = _currentBook.chapters[_currentChapter.chapter - 2];
+        });
+      } else if (currentBookIndex > 0) {
+        final prevBookName = books[currentBookIndex - 1];
+        final prevBook = await loadBook(_currentTranslation, prevBookName);
+        setState(() {
+          _currentBook = prevBook;
+          _currentChapter = prevBook.chapters.last;
+        });
+      }
+    }
   }
 
   TextSpan _formatVerse(String text) {
