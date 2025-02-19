@@ -65,7 +65,7 @@ class _CalendarTabState extends State<CalendarTab> {
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(8),
                   child: Column(
                     children: [
                       Row(
@@ -91,7 +91,7 @@ class _CalendarTabState extends State<CalendarTab> {
                       ),
                       if (!isSameDay(selectedDate, today))
                         Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(8),
                           child: ElevatedButton(
                             onPressed: () {
                               setState(() {
@@ -175,30 +175,30 @@ class _CalendarTabState extends State<CalendarTab> {
           Column(
             children: readings.map((reading) {
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final book = await loadBook(translation, reading.book);
-                    widget.navigatorKey.currentState?.pushNamed(
-                      '/versesScreen',
-                      arguments: {
-                        'book': book,
-                        'chapter': book.chapters[reading.chapter - 1],
-                      },
-                    );
-                    widget.onTabSelected(1);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8.0,
-                      horizontal: 4.0,
-                    ),
-                    child: Text(
-                      '${reading.book} ${reading.chapter}',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 20),
-                      softWrap: true,
-                      overflow: TextOverflow.visible,
+                padding: const EdgeInsets.all(8),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final book = await loadBook(translation, reading.book);
+                      widget.navigatorKey.currentState?.pushNamed(
+                        '/versesScreen',
+                        arguments: {
+                          'book': book,
+                          'chapter': book.chapters[reading.chapter - 1],
+                        },
+                      );
+                      widget.onTabSelected(1);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        '${reading.book} ${reading.chapter}',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 20),
+                        softWrap: true,
+                        overflow: TextOverflow.visible,
+                      ),
                     ),
                   ),
                 ),
