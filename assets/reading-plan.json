@@ -2151,7 +2151,11 @@
       "second": [
         {
           "book": "Psalms",
-          "chapter": 135136
+          "chapter": 135
+        },
+        {
+          "book": "Psalms",
+          "chapter": 136
         }
       ],
       "third": [

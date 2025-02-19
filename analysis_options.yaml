@@ -7,4 +7,6 @@ analyzer:
 linter:
   rules:
     avoid_print: false
+    line_length: 100
     prefer_single_quotes: false
+    require_trailing_commas: true
