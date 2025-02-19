@@ -6,6 +6,7 @@ import '../utils.dart';
 class SettingsConstants {
   static const List<String> translations = [
     "BBE",
+    "ESV",
     "KJV",
     "YLT",
   ];

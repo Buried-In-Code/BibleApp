@@ -28,6 +28,7 @@ flutter:
   assets:
     - assets/reading-plan.json
     - assets/BBE/
+    - assets/ESV/
     - assets/KJV/
     - assets/YLT/
 flutter_launcher_icons:
