@@ -6,7 +6,6 @@ import 'settings/provider.dart';
 import 'settings/tab.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
   runApp(
     ChangeNotifierProvider(
       create: (context) => SettingsProvider(),
@@ -46,18 +45,18 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
-
   final GlobalKey<NavigatorState> _bibleNavigatorKey =
       GlobalKey<NavigatorState>();
+  int _selectedIndex = 0;
 
-  final List<Widget> _screens = [];
+  late final List<Widget> _screens = [];
 
   @override
   void initState() {
     super.initState();
     _screens.addAll([
-      CalendarTab(),
+      CalendarTab(
+          navigatorKey: _bibleNavigatorKey, onTabSelected: _onItemTapped),
       BibleTab(navigatorKey: _bibleNavigatorKey),
       SettingsTab(),
     ]);

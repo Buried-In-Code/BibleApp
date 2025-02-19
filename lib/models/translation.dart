@@ -7,9 +7,9 @@ class Translation {
 
   factory Translation.fromJson(Map<String, dynamic> data) {
     return Translation(
-      name: data["name"],
-      acronym: data["acronym"],
-      books: List<String>.from(data["books"]),
+      name: data['name'],
+      acronym: data['acronym'],
+      books: List<String>.from(data['books']),
     );
   }
 }
@@ -22,8 +22,8 @@ class Book {
 
   factory Book.fromJson(Map<String, dynamic> data) {
     return Book(
-      name: data["name"],
-      chapters: (data["chapters"] as List)
+      name: data['name'],
+      chapters: (data['chapters'] as List)
           .map((chapter) => Chapter.fromJson(chapter))
           .toList(),
     );
@@ -38,8 +38,8 @@ class Chapter {
 
   factory Chapter.fromJson(Map<String, dynamic> data) {
     return Chapter(
-      chapter: data["chapter"],
-      verses: (data["verses"] as List)
+      chapter: data['chapter'],
+      verses: (data['verses'] as List)
           .map((verse) => Verse.fromJson(verse))
           .toList(),
     );
@@ -54,8 +54,8 @@ class Verse {
 
   factory Verse.fromJson(Map<String, dynamic> data) {
     return Verse(
-      verse: data["verse"],
-      text: data["text"],
+      verse: data['verse'],
+      text: data['text'],
     );
   }
 }

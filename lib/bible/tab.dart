@@ -4,16 +4,21 @@ import '../models/translation.dart';
 import '../settings/provider.dart';
 import '../utils.dart';
 
-class BibleTab extends StatelessWidget {
+class BibleTab extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
 
   const BibleTab({super.key, required this.navigatorKey});
 
   @override
+  _BibleTabState createState() => _BibleTabState();
+}
+
+class _BibleTabState extends State<BibleTab> {
+  @override
   Widget build(BuildContext context) {
     return Navigator(
-      key: navigatorKey,
-      initialRoute: '/bookSelector',
+      key: widget.navigatorKey,
+      initialRoute: '/',
       onGenerateRoute: (settings) {
         final args = settings.arguments as Map<String, dynamic>? ?? {};
         switch (settings.name) {
@@ -30,7 +35,6 @@ class BibleTab extends StatelessWidget {
                 initialChapter: args['chapter'],
               ),
             );
-          case '/bookSelector':
           default:
             return MaterialPageRoute(builder: (_) => const BookSelector());
         }
@@ -48,7 +52,8 @@ class BookSelector extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-          title: Text('${provider.translation.name} - Select Book'),
+          title: Text(
+              '[${provider.translation.acronym}] ${provider.translation.name}'),
           automaticallyImplyLeading: false),
       body: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -64,14 +69,12 @@ class BookSelector extends StatelessWidget {
           return ElevatedButton(
             onPressed: () async {
               final loadedBook = await loadBook(provider.translation, book);
-              if (loadedBook != null) {
-                Navigator.of(context, rootNavigator: false).pushNamed(
-                  '/chapterSelector',
-                  arguments: {
-                    'book': loadedBook,
-                  },
-                );
-              }
+              Navigator.of(context, rootNavigator: false).pushNamed(
+                '/chapterSelector',
+                arguments: {
+                  'book': loadedBook,
+                },
+              );
             },
             child: Text(book,
                 textAlign: TextAlign.center, style: TextStyle(fontSize: 20)),
@@ -115,7 +118,12 @@ class _ChapterSelectorState extends State<ChapterSelector> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text('${_currentBook.name} - Select Chapter')),
+      appBar: AppBar(
+          leading: BackButton(onPressed: () {
+            Navigator.of(context).pushNamed('/bookSelector');
+          }),
+          title:
+              Text('[${provider.translation.acronym}] ${_currentBook.name}')),
       body: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 4,
@@ -145,11 +153,9 @@ class _ChapterSelectorState extends State<ChapterSelector> {
 
   Future<void> _loadNewTranslation() async {
     final newBook = await loadBook(_currentTranslation, _currentBook.name);
-    if (newBook != null) {
-      setState(() {
-        _currentBook = newBook;
-      });
-    }
+    setState(() {
+      _currentBook = newBook;
+    });
   }
 }
 
@@ -191,8 +197,14 @@ class _VersesScreenState extends State<VersesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-          title:
-              Text('${_currentBook.name} Chapter ${_currentChapter.chapter}')),
+          leading: BackButton(onPressed: () {
+            Navigator.of(context).pushNamed(
+              '/chapterSelector',
+              arguments: {'book': _currentBook},
+            );
+          }),
+          title: Text(
+              '[${provider.translation.acronym}] ${_currentBook.name} ${_currentChapter.chapter}')),
       body: GestureDetector(
         onHorizontalDragEnd: (details) {
           if (details.primaryVelocity! < 0) {
@@ -240,14 +252,12 @@ class _VersesScreenState extends State<VersesScreen> {
 
   Future<void> _loadNewTranslation() async {
     final newBook = await loadBook(_currentTranslation, _currentBook.name);
-    if (newBook != null) {
-      setState(() {
-        _currentBook = newBook;
-        _currentChapter = newBook.chapters.firstWhere(
-            (c) => c.chapter == _currentChapter.chapter,
-            orElse: () => newBook.chapters.first);
-      });
-    }
+    setState(() {
+      _currentBook = newBook;
+      _currentChapter = newBook.chapters.firstWhere(
+          (c) => c.chapter == _currentChapter.chapter,
+          orElse: () => newBook.chapters.first);
+    });
   }
 
   Future<void> _changeChapterOrBook(bool forward) async {

@@ -1,22 +1,169 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/plan.dart';
+import '../models/translation.dart';
 import '../settings/provider.dart';
+import '../utils.dart';
 
 class CalendarTab extends StatefulWidget {
-  const CalendarTab({super.key});
+  final GlobalKey<NavigatorState> navigatorKey;
+  final Function(int) onTabSelected;
+
+  const CalendarTab(
+      {super.key, required this.navigatorKey, required this.onTabSelected});
 
   @override
   _CalendarTabState createState() => _CalendarTabState();
 }
 
 class _CalendarTabState extends State<CalendarTab> {
+  DateTime selectedDate = DateTime.now();
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<SettingsProvider>(context);
+    final today = DateTime.now();
 
     return Scaffold(
       appBar: AppBar(title: Text('Daily Readings')),
-      body: Center(child: Text('Daily Readings')),
+      body: FutureBuilder<Plan>(
+        future: getPlan(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error loading readings'));
+          } else if (!snapshot.hasData) {
+            return Center(child: Text('No readings found'));
+          }
+
+          final plan = snapshot.data!;
+          final entry = plan.entries.cast<Entry?>().firstWhere(
+                (x) =>
+                    x!.month == selectedDate.month && x.day == selectedDate.day,
+                orElse: () => null,
+              );
+
+          return Column(children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                          icon: Icon(Icons.chevron_left),
+                          onPressed: () => {
+                                setState(() {
+                                  selectedDate =
+                                      selectedDate.add(Duration(days: -1));
+                                })
+                              }),
+                      Text(
+                        formatDate(selectedDate),
+                        style: TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                      IconButton(
+                          icon: Icon(Icons.chevron_right),
+                          onPressed: () => {
+                                setState(() {
+                                  selectedDate =
+                                      selectedDate.add(Duration(days: 1));
+                                })
+                              }),
+                    ],
+                  ),
+                  if (!isSameDay(selectedDate, today))
+                    Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              selectedDate = today;
+                            });
+                          },
+                          child: Text('Today',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 20)),
+                        )),
+                ],
+              ),
+            ),
+            Expanded(
+                child: entry == null
+                    ? Center(
+                        child: Text('No readings found for today',
+                            style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold)))
+                    : ListView(padding: const EdgeInsets.all(16), children: [
+                        _buildSection('First Portion', provider.translation,
+                            entry.firstPortion),
+                        _buildSection('Second Portion', provider.translation,
+                            entry.secondPortion),
+                        _buildSection('Third Portion', provider.translation,
+                            entry.thirdPortion),
+                      ]))
+          ]);
+        },
+      ),
     );
+  }
+
+  bool isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
+
+  Widget _buildSection(
+      String title, Translation translation, List<Reading> readings) {
+    if (readings.isEmpty) return SizedBox.shrink();
+    return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              title,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 3,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemCount: readings.length,
+              itemBuilder: (context, index) {
+                final reading = readings[index];
+
+                return ElevatedButton(
+                  onPressed: () async {
+                    final book = await loadBook(translation, reading.book);
+                    widget.navigatorKey.currentState?.pushNamed('/versesScreen',
+                        arguments: {
+                          'book': book,
+                          'chapter': book.chapters[reading.chapter - 1]
+                        });
+                    widget.onTabSelected(1);
+                  },
+                  child: Text('${reading.book} ${reading.chapter}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 20)),
+                );
+              },
+            ),
+          ],
+        ));
   }
 }
