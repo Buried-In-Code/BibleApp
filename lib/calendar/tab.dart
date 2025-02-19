@@ -9,8 +9,11 @@ class CalendarTab extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
   final Function(int) onTabSelected;
 
-  const CalendarTab(
-      {super.key, required this.navigatorKey, required this.onTabSelected});
+  const CalendarTab({
+    super.key,
+    required this.navigatorKey,
+    required this.onTabSelected,
+  });
 
   @override
   _CalendarTabState createState() => _CalendarTabState();
@@ -31,35 +34,36 @@ class _CalendarTabState extends State<CalendarTab> {
     final today = DateTime.now();
 
     return Scaffold(
-        appBar: AppBar(title: Text('Daily Readings')),
-        body: GestureDetector(
-          onHorizontalDragEnd: (details) {
-            if (details.primaryVelocity! < 0) {
-              _changeDate(1);
-            } else if (details.primaryVelocity! > 0) {
-              _changeDate(-1);
+      appBar: AppBar(title: Text('Daily Readings')),
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity! < 0) {
+            _changeDate(1);
+          } else if (details.primaryVelocity! > 0) {
+            _changeDate(-1);
+          }
+        },
+        child: FutureBuilder<Plan>(
+          future: getPlan(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error loading readings'));
+            } else if (!snapshot.hasData) {
+              return Center(child: Text('No readings found'));
             }
-          },
-          child: FutureBuilder<Plan>(
-            future: getPlan(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error loading readings'));
-              } else if (!snapshot.hasData) {
-                return Center(child: Text('No readings found'));
-              }
 
-              final plan = snapshot.data!;
-              final entry = plan.entries.cast<Entry?>().firstWhere(
-                    (x) =>
-                        x!.month == selectedDate.month &&
-                        x.day == selectedDate.day,
-                    orElse: () => null,
-                  );
+            final plan = snapshot.data!;
+            final entry = plan.entries.cast<Entry?>().firstWhere(
+                  (x) =>
+                      x!.month == selectedDate.month &&
+                      x.day == selectedDate.day,
+                  orElse: () => null,
+                );
 
-              return Column(children: [
+            return Column(
+              children: [
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -68,57 +72,81 @@ class _CalendarTabState extends State<CalendarTab> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           IconButton(
-                              icon: Icon(Icons.chevron_left),
-                              onPressed: () => _changeDate(-1)),
+                            icon: Icon(Icons.chevron_left),
+                            onPressed: () => _changeDate(-1),
+                          ),
                           Text(
                             formatDate(selectedDate),
                             style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold),
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                           IconButton(
-                              icon: Icon(Icons.chevron_right),
-                              onPressed: () => _changeDate(1)),
+                            icon: Icon(Icons.chevron_right),
+                            onPressed: () => _changeDate(1),
+                          ),
                         ],
                       ),
                       if (!isSameDay(selectedDate, today))
                         Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                setState(() {
-                                  selectedDate = today;
-                                });
-                              },
-                              child: Text('Today',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(fontSize: 20)),
-                            )),
+                          padding: const EdgeInsets.all(16),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                selectedDate = today;
+                              });
+                            },
+                            child: Text(
+                              'Today',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 20),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
                 Expanded(
-                    child: entry == null
-                        ? Center(
-                            child: Text('No readings found for today',
-                                style: TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold)))
-                        : ListView(
-                            padding: const EdgeInsets.all(16),
-                            children: [
-                                _buildSection('First Portion',
-                                    provider.translation, entry.firstPortion),
-                                _buildSection('Second Portion',
-                                    provider.translation, entry.secondPortion),
-                                _buildSection('Third Portion',
-                                    provider.translation, entry.thirdPortion),
-                              ]))
-              ]);
-            },
-          ),
-        ));
+                  child: entry == null
+                      ? Center(
+                          child: Text(
+                            'No readings found for today',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        )
+                      : ListView(
+                          padding: const EdgeInsets.all(16),
+                          children: [
+                            _buildSection(
+                              'First Portion',
+                              provider.translation,
+                              entry.firstPortion,
+                            ),
+                            _buildSection(
+                              'Second Portion',
+                              provider.translation,
+                              entry.secondPortion,
+                            ),
+                            _buildSection(
+                              'Third Portion',
+                              provider.translation,
+                              entry.thirdPortion,
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
   }
 
   bool isSameDay(DateTime date1, DateTime date2) {
@@ -128,60 +156,57 @@ class _CalendarTabState extends State<CalendarTab> {
   }
 
   Widget _buildSection(
-      String title, Translation translation, List<Reading> readings) {
+    String title,
+    Translation translation,
+    List<Reading> readings,
+  ) {
     if (readings.isEmpty) return SizedBox.shrink();
     return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 8),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 3,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-              ),
-              itemCount: readings.length,
-              itemBuilder: (context, index) {
-                final reading = readings[index];
-
-                return SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final book = await loadBook(translation, reading.book);
-                      widget.navigatorKey.currentState
-                          ?.pushNamed('/versesScreen', arguments: {
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            title,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 8),
+          Column(
+            children: readings.map((reading) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final book = await loadBook(translation, reading.book);
+                    widget.navigatorKey.currentState?.pushNamed(
+                      '/versesScreen',
+                      arguments: {
                         'book': book,
-                        'chapter': book.chapters[reading.chapter - 1]
-                      });
-                      widget.onTabSelected(1);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8.0, horizontal: 4.0),
-                      child: Text(
-                        '${reading.book} ${reading.chapter}',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 20),
-                        softWrap: true,
-                        overflow: TextOverflow.visible,
-                      ),
+                        'chapter': book.chapters[reading.chapter - 1],
+                      },
+                    );
+                    widget.onTabSelected(1);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 4.0,
+                    ),
+                    child: Text(
+                      '${reading.book} ${reading.chapter}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 20),
+                      softWrap: true,
+                      overflow: TextOverflow.visible,
                     ),
                   ),
-                );
-              },
-            ),
-          ],
-        ));
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
   }
 }

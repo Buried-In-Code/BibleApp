@@ -26,11 +26,15 @@ class BibleApp extends StatelessWidget {
       themeMode: provider.themeMode,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.teal, brightness: Brightness.light),
+          seedColor: Colors.teal,
+          brightness: Brightness.light,
+        ),
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.teal, brightness: Brightness.dark),
+          seedColor: Colors.teal,
+          brightness: Brightness.dark,
+        ),
       ),
       home: const MainScreen(),
     );
@@ -56,7 +60,9 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     _screens.addAll([
       CalendarTab(
-          navigatorKey: _bibleNavigatorKey, onTabSelected: _onItemTapped),
+        navigatorKey: _bibleNavigatorKey,
+        onTabSelected: _onItemTapped,
+      ),
       BibleTab(navigatorKey: _bibleNavigatorKey),
       SettingsTab(),
     ]);
@@ -80,7 +86,9 @@ class _MainScreenState extends State<MainScreen> {
         onDestinationSelected: _onItemTapped,
         destinations: const [
           NavigationDestination(
-              icon: Icon(Icons.calendar_today), label: 'Readings'),
+            icon: Icon(Icons.calendar_today),
+            label: 'Readings',
+          ),
           NavigationDestination(icon: Icon(Icons.book), label: 'Bible'),
           NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
         ],

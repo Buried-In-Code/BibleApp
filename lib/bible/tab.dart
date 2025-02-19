@@ -52,9 +52,11 @@ class BookSelector extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-          title: Text(
-              '[${provider.translation.acronym}] ${provider.translation.name}'),
-          automaticallyImplyLeading: false),
+        title: Text(
+          '[${provider.translation.acronym}] ${provider.translation.name}',
+        ),
+        automaticallyImplyLeading: false,
+      ),
       body: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
@@ -76,8 +78,11 @@ class BookSelector extends StatelessWidget {
                 },
               );
             },
-            child: Text(book,
-                textAlign: TextAlign.center, style: TextStyle(fontSize: 20)),
+            child: Text(
+              book,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 20),
+            ),
           );
         },
       ),
@@ -119,11 +124,13 @@ class _ChapterSelectorState extends State<ChapterSelector> {
 
     return Scaffold(
       appBar: AppBar(
-          leading: BackButton(onPressed: () {
+        leading: BackButton(
+          onPressed: () {
             Navigator.of(context).pushNamed('/bookSelector');
-          }),
-          title:
-              Text('[${provider.translation.acronym}] ${_currentBook.name}')),
+          },
+        ),
+        title: Text('[${provider.translation.acronym}] ${_currentBook.name}'),
+      ),
       body: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 4,
@@ -142,9 +149,11 @@ class _ChapterSelectorState extends State<ChapterSelector> {
                 arguments: {'book': _currentBook, 'chapter': chapter},
               );
             },
-            child: Text('${chapter.chapter}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 20)),
+            child: Text(
+              '${chapter.chapter}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 20),
+            ),
           );
         },
       ),
@@ -197,14 +206,18 @@ class _VersesScreenState extends State<VersesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-          leading: BackButton(onPressed: () {
+        leading: BackButton(
+          onPressed: () {
             Navigator.of(context).pushNamed(
               '/chapterSelector',
               arguments: {'book': _currentBook},
             );
-          }),
-          title: Text(
-              '[${provider.translation.acronym}] ${_currentBook.name} ${_currentChapter.chapter}')),
+          },
+        ),
+        title: Text(
+          '[${provider.translation.acronym}] ${_currentBook.name} ${_currentChapter.chapter}',
+        ),
+      ),
       body: GestureDetector(
         onHorizontalDragEnd: (details) {
           if (details.primaryVelocity! < 0) {
@@ -255,8 +268,9 @@ class _VersesScreenState extends State<VersesScreen> {
     setState(() {
       _currentBook = newBook;
       _currentChapter = newBook.chapters.firstWhere(
-          (c) => c.chapter == _currentChapter.chapter,
-          orElse: () => newBook.chapters.first);
+        (c) => c.chapter == _currentChapter.chapter,
+        orElse: () => newBook.chapters.first,
+      );
     });
   }
 
@@ -304,8 +318,12 @@ class _VersesScreenState extends State<VersesScreen> {
         spans.add(TextSpan(text: text.substring(lastMatchEnd, match.start)));
       }
       String italicText = text.substring(match.start + 4, match.end - 4);
-      spans.add(TextSpan(
-          text: italicText, style: TextStyle(fontStyle: FontStyle.italic)));
+      spans.add(
+        TextSpan(
+          text: italicText,
+          style: TextStyle(fontStyle: FontStyle.italic),
+        ),
+      );
       lastMatchEnd = match.end;
     }
 

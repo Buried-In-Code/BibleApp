@@ -19,12 +19,13 @@ class Entry {
   final List<Reading> secondPortion;
   final List<Reading> thirdPortion;
 
-  Entry(
-      {required this.month,
-      required this.day,
-      required this.firstPortion,
-      required this.secondPortion,
-      required this.thirdPortion});
+  Entry({
+    required this.month,
+    required this.day,
+    required this.firstPortion,
+    required this.secondPortion,
+    required this.thirdPortion,
+  });
 
   factory Entry.fromJson(Map<String, dynamic> data) {
     return Entry(

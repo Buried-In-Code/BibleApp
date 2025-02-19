@@ -12,14 +12,17 @@ Future<List<Translation>> listTranslations() async {
   final Map<String, dynamic> manifest = json.decode(manifestStr);
 
   final translationFiles = manifest.keys
-      .where((key) =>
-          key.startsWith('assets/') && key.endsWith('translation.json'))
+      .where(
+        (key) => key.startsWith('assets/') && key.endsWith('translation.json'),
+      )
       .toList();
-  return Future.wait(translationFiles.map((entry) async {
-    final String contents = await rootBundle.loadString(entry);
-    final Map<String, dynamic> data = json.decode(contents);
-    return Translation.fromJson(data);
-  }));
+  return Future.wait(
+    translationFiles.map((entry) async {
+      final String contents = await rootBundle.loadString(entry);
+      final Map<String, dynamic> data = json.decode(contents);
+      return Translation.fromJson(data);
+    }),
+  );
 }
 
 Future<Translation> getTranslation(String acronym) async {
