@@ -1,15 +1,15 @@
 name: Build and Release
 
 on:
-  push:
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch:
+    inputs:
+      beta:
+        type: boolean
+        description: Beta release
 
 jobs:
   build-release:
-    name: Build & Release
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: write
 
@@ -17,37 +17,31 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
 
-      - run: flutter build apk --release
-      - run: flutter build appbundle
-      - run: flutter build ios --release --no-codesign
-      - name: Compress Archives and IPAs
+      - name: Flutter Doctor
         run: |
-          cd build
-          tar -czf ios_build.tar.gz ios
+          flutter doctor -v
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Releases
-          path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/bundle/release/app-release.aab
-            build/ios_build.tar.gz
+      - name: Extract version from pubspec.yaml
+        run: |
+          version=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | tr -d '\r')
+          echo "VERSION=$version" >> $GITHUB_ENV
 
-      - name: Get Version from pubspec.yaml
-        id: get_version
-        run: echo "VERSION=$(grep 'version:' pubspec.yaml | awk '{print $2}')" >> "$GITHUB_ENV"
+      - name: Build APKs
+        run: flutter build apk --release --split-per-abi
       
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/app/outputs/flutter-apk/app-release.apk,build/app/outputs/bundle/release/app-release.aab,build/ios_build.tar.gz"
+          artifacts: 'build/app/outputs/flutter-apk/*.apk'
           tag: ${{ env.VERSION }}
           name: v${{ env.VERSION }}
+          prerelease: ${{ inputs.beta }}
           allowUpdates: true
           removeArtifacts: true
+          generateReleaseNotes: true
