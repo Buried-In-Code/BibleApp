@@ -321,10 +321,12 @@ class _VersesScreenState extends State<VersesScreen> {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _speak,
-        child: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-      ),
+      floatingActionButton: provider.ttsEnabled
+          ? FloatingActionButton(
+              onPressed: _speak,
+              child: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+            )
+          : null,
     );
   }
 

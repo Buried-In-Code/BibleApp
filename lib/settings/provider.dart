@@ -19,6 +19,9 @@ class SettingsProvider extends ChangeNotifier {
   late Translation _translation;
   Translation get translation => _translation;
 
+  bool _ttsEnabled = false;
+  bool get ttsEnabled => _ttsEnabled;
+
   SettingsProvider() {
     _loadPreferences();
   }
@@ -36,6 +39,11 @@ class SettingsProvider extends ChangeNotifier {
     } else {
       _translation = await getTranslation('KJV');
     }
+    bool? ttsEnabled = preferences.getBool('ttsEnabled');
+    if (ttsEnabled != null) {
+      _ttsEnabled = ttsEnabled;
+    }
+
     notifyListeners();
   }
 
@@ -51,5 +59,12 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     SharedPreferences preferences = await SharedPreferences.getInstance();
     preferences.setString('translation', translation.acronym);
+  }
+
+  void setTtsEnabled(bool enabled) async {
+    _ttsEnabled = enabled;
+    notifyListeners();
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    preferences.setBool('ttsEnabled', enabled);
   }
 }

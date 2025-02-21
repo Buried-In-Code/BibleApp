@@ -53,6 +53,13 @@ class _SettingsTabState extends State<SettingsTab> {
               }).toList(),
             ),
           ),
+          SwitchListTile(
+            title: Text('Text-to-Speech'),
+            value: provider.ttsEnabled,
+            onChanged: (value) {
+              provider.setTtsEnabled(value);
+            },
+          ),
         ],
       ),
     );
