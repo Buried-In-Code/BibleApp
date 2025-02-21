@@ -4,12 +4,12 @@ import '../models/translation.dart';
 import '../utils.dart';
 
 class SettingsConstants {
-  static const List<String> translations = [
-    "BBE",
-    "ESV",
-    "KJV",
-    "YLT",
-  ];
+  static const Map<String, String> translations = {
+    'Bible in Basic English': 'BBE',
+    'English Standard Version': 'ESV',
+    'King James Version': 'KJV',
+    'Young\'s Literal Translation': 'YLT',
+  };
 }
 
 class SettingsProvider extends ChangeNotifier {
@@ -34,9 +34,8 @@ class SettingsProvider extends ChangeNotifier {
     if (acronym != null) {
       _translation = await getTranslation(acronym);
     } else {
-      _translation = await getTranslation("KJV");
+      _translation = await getTranslation('KJV');
     }
-
     notifyListeners();
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 import '../models/translation.dart';
 import '../settings/provider.dart';
@@ -183,9 +184,12 @@ class VersesScreen extends StatefulWidget {
 }
 
 class _VersesScreenState extends State<VersesScreen> {
+  final FlutterTts _tts = FlutterTts();
   late Translation _currentTranslation;
   late Book _currentBook;
   late Chapter _currentChapter;
+  int _currentVerseIndex = 0;
+  bool _isPlaying = false;
 
   @override
   void initState() {
@@ -194,6 +198,63 @@ class _VersesScreenState extends State<VersesScreen> {
     _currentTranslation = provider.translation;
     _currentBook = widget.initialBook;
     _currentChapter = widget.initialChapter;
+
+    _tts.setCompletionHandler(() {
+      setState(() {
+        _isPlaying = false;
+      });
+    });
+
+    _initSpeech(provider);
+  }
+
+  Future<void> _initSpeech(SettingsProvider provider) async {
+    final voices = await _tts.getVoices;
+    for (var voice in voices) {
+      if (voice['network_required'] == '0' && voice['locale'] == 'en-AU')
+        print(voice);
+    }
+    await _tts.setLanguage('en-AU');
+    await _tts.setPitch(1.0);
+    await _tts.setSpeechRate(0.5);
+  }
+
+  Future<void> _speak() async {
+    if (_isPlaying) {
+      await _tts.stop();
+      setState(() {
+        _isPlaying = false;
+      });
+    } else {
+      setState(() {
+        _isPlaying = true;
+        _currentVerseIndex = 0;
+      });
+
+      _tts.setCompletionHandler(() {
+        _playNextVerse();
+      });
+      await _tts
+          .speak('${_currentBook.name} Chapter ${_currentChapter.chapter}');
+    }
+  }
+
+  void _playNextVerse() {
+    if (!_isPlaying || _currentVerseIndex >= _currentChapter.verses.length) {
+      setState(() {
+        _isPlaying = false;
+      });
+      return;
+    }
+
+    final verse = _currentChapter.verses[_currentVerseIndex];
+    _tts.speak(
+      verse.text
+          .replaceAll('`', '\'')
+          .replaceAll('<FI>', '')
+          .replaceAll('<Fi>', ''),
+    );
+    _currentVerseIndex++;
   }
 
   @override
@@ -239,7 +300,7 @@ class _VersesScreenState extends State<VersesScreen> {
                   SizedBox(
                     width: 30.0,
                     child: Text(
-                      "${verse.verse}",
+                      '${verse.verse}',
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       textAlign: TextAlign.right,
@@ -260,12 +321,24 @@ class _VersesScreenState extends State<VersesScreen> {
           },
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _speak,
+        child: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+      ),
     );
   }
 
+  @override
+  void dispose() {
+    _tts.stop();
+    super.dispose();
+  }
+
   Future<void> _loadNewTranslation() async {
+    await _tts.stop();
     final newBook = await loadBook(_currentTranslation, _currentBook.name);
     setState(() {
+      _isPlaying = false;
       _currentBook = newBook;
       _currentChapter = newBook.chapters.firstWhere(
         (c) => c.chapter == _currentChapter.chapter,
@@ -275,18 +348,21 @@ class _VersesScreenState extends State<VersesScreen> {
   }
 
   Future<void> _changeChapterOrBook(bool forward) async {
+    await _tts.stop();
     final books = _currentTranslation.books;
     final currentBookIndex = books.indexWhere((b) => b == _currentBook.name);
 
     if (forward) {
       if (_currentChapter.chapter < _currentBook.chapters.length) {
         setState(() {
+          _isPlaying = false;
           _currentChapter = _currentBook.chapters[_currentChapter.chapter];
         });
       } else if (currentBookIndex < books.length - 1) {
         final nextBookName = books[currentBookIndex + 1];
         final nextBook = await loadBook(_currentTranslation, nextBookName);
         setState(() {
+          _isPlaying = false;
           _currentBook = nextBook;
           _currentChapter = nextBook.chapters.first;
         });
@@ -294,12 +370,14 @@ class _VersesScreenState extends State<VersesScreen> {
     } else {
       if (_currentChapter.chapter > 1) {
         setState(() {
+          _isPlaying = false;
           _currentChapter = _currentBook.chapters[_currentChapter.chapter - 2];
         });
       } else if (currentBookIndex > 0) {
         final prevBookName = books[currentBookIndex - 1];
         final prevBook = await loadBook(_currentTranslation, prevBookName);
         setState(() {
+          _isPlaying = false;
           _currentBook = prevBook;
           _currentChapter = prevBook.chapters.last;
         });

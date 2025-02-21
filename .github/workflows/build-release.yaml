@@ -38,7 +38,7 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: 'build/app/outputs/flutter-apk/*.apk'
+          artifacts: 'build/app/outputs/flutter-apk/*'
           tag: ${{ env.VERSION }}
           name: v${{ env.VERSION }}
           prerelease: ${{ inputs.beta }}

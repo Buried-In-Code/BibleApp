@@ -45,10 +45,10 @@ class _SettingsTabState extends State<SettingsTab> {
                   provider.setTranslation(newTranslation);
                 }
               },
-              items: SettingsConstants.translations.map((translation) {
+              items: SettingsConstants.translations.entries.map((translation) {
                 return DropdownMenuItem(
-                  value: translation,
-                  child: Text(translation),
+                  value: translation.value,
+                  child: Text('[${translation.value}] ${translation.key}'),
                 );
               }).toList(),
             ),
