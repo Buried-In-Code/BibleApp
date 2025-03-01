@@ -1,7 +1,7 @@
 name: bible_app
 description: A flutter project.
 repository: https://github.com/Buried-In-Code/BibleApp
-version: 0.3.1+20
+version: 0.3.2+21
 publish_to: 'none'
 
 environment:

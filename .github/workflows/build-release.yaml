@@ -44,3 +44,4 @@ jobs:
           allowUpdates: true
           removeArtifacts: true
           generateReleaseNotes: true
+          draft: true
