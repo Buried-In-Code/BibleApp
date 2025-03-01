@@ -28,29 +28,31 @@ class _SettingsTabState extends State<SettingsTab> {
                   provider.setThemeMode(newMode);
                 }
               },
-              items: ThemeMode.values.map((mode) {
-                return DropdownMenuItem(
-                  value: mode,
-                  child: Text(capitalize(mode.toString().split('.').last)),
-                );
-              }).toList(),
+              items:
+                  ThemeMode.values.map((mode) {
+                    return DropdownMenuItem(
+                      value: mode,
+                      child: Text(capitalize(mode.toString().split('.').last)),
+                    );
+                  }).toList(),
             ),
           ),
           ListTile(
             title: Text('Translation'),
             trailing: DropdownButton<String>(
-              value: provider.translation.acronym,
+              value: provider.translation,
               onChanged: (newTranslation) {
                 if (newTranslation != null) {
                   provider.setTranslation(newTranslation);
                 }
               },
-              items: SettingsConstants.translations.entries.map((translation) {
-                return DropdownMenuItem(
-                  value: translation.value,
-                  child: Text('[${translation.value}] ${translation.key}'),
-                );
-              }).toList(),
+              items:
+                  Constants.TRANSLATIONS.entries.map((translation) {
+                    return DropdownMenuItem(
+                      value: translation.key,
+                      child: Text('[${translation.key}] ${translation.value}'),
+                    );
+                  }).toList(),
             ),
           ),
           SwitchListTile(

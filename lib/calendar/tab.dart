@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/bible.dart';
 import '../models/plan.dart';
-import '../models/translation.dart';
 import '../settings/provider.dart';
 import '../utils.dart';
 
@@ -56,11 +56,10 @@ class _CalendarTabState extends State<CalendarTab> {
 
             final plan = snapshot.data!;
             final entry = plan.entries.cast<Entry?>().firstWhere(
-                  (x) =>
-                      x!.month == selectedDate.month &&
-                      x.day == selectedDate.day,
-                  orElse: () => null,
-                );
+              (x) =>
+                  x!.month == selectedDate.month && x.day == selectedDate.day,
+              orElse: () => null,
+            );
 
             return Column(
               children: [
@@ -109,37 +108,38 @@ class _CalendarTabState extends State<CalendarTab> {
                   ),
                 ),
                 Expanded(
-                  child: entry == null
-                      ? Center(
-                          child: Text(
-                            'No readings found for today',
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                  child:
+                      entry == null
+                          ? Center(
+                            child: Text(
+                              'No readings found for today',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
+                          )
+                          : ListView(
+                            padding: const EdgeInsets.all(16),
+                            children: [
+                              _buildSection(
+                                'First Portion',
+                                provider.translation,
+                                entry.firstPortion,
+                              ),
+                              _buildSection(
+                                'Second Portion',
+                                provider.translation,
+                                entry.secondPortion,
+                              ),
+                              _buildSection(
+                                'Third Portion',
+                                provider.translation,
+                                entry.thirdPortion,
+                              ),
+                            ],
                           ),
-                        )
-                      : ListView(
-                          padding: const EdgeInsets.all(16),
-                          children: [
-                            _buildSection(
-                              'First Portion',
-                              provider.translation,
-                              entry.firstPortion,
-                            ),
-                            _buildSection(
-                              'Second Portion',
-                              provider.translation,
-                              entry.secondPortion,
-                            ),
-                            _buildSection(
-                              'Third Portion',
-                              provider.translation,
-                              entry.thirdPortion,
-                            ),
-                          ],
-                        ),
                 ),
               ],
             );
@@ -157,7 +157,7 @@ class _CalendarTabState extends State<CalendarTab> {
 
   Widget _buildSection(
     String title,
-    Translation translation,
+    String translation,
     List<Reading> readings,
   ) {
     if (readings.isEmpty) return SizedBox.shrink();
@@ -173,37 +173,41 @@ class _CalendarTabState extends State<CalendarTab> {
           ),
           SizedBox(height: 8),
           Column(
-            children: readings.map((reading) {
-              return Padding(
-                padding: const EdgeInsets.all(8),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final book = await loadBook(translation, reading.book);
-                      widget.navigatorKey.currentState?.pushNamed(
-                        '/versesScreen',
-                        arguments: {
-                          'book': book,
-                          'chapter': book.chapters[reading.chapter - 1],
+            children:
+                readings.map((reading) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final book = await loadBook(
+                            translation,
+                            reading.book,
+                          );
+                          widget.navigatorKey.currentState?.pushNamed(
+                            '/versesScreen',
+                            arguments: {
+                              'book': book,
+                              'chapter': book.chapters[reading.chapter - 1],
+                            },
+                          );
+                          widget.onTabSelected(1);
                         },
-                      );
-                      widget.onTabSelected(1);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        '${reading.book} ${reading.chapter}',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 20),
-                        softWrap: true,
-                        overflow: TextOverflow.visible,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            '${reading.book} ${reading.chapter}',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 20),
+                            softWrap: true,
+                            overflow: TextOverflow.visible,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
           ),
         ],
       ),

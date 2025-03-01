@@ -48,9 +48,6 @@ class Reading {
   Reading({required this.book, required this.chapter});
 
   factory Reading.fromJson(Map<String, dynamic> data) {
-    return Reading(
-      book: data['book'],
-      chapter: data['chapter'],
-    );
+    return Reading(book: data['book'], chapter: data['chapter']);
   }
 }
