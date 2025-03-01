@@ -44,7 +44,7 @@ class _CalendarTabState extends State<CalendarTab> {
           }
         },
         child: FutureBuilder<Plan>(
-          future: getPlan(),
+          future: loadPlan(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: CircularProgressIndicator());
